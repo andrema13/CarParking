@@ -17,13 +17,13 @@ public class InputWindowGui {
         inputFrame.setDefaultCloseOperation(inputFrame.EXIT_ON_CLOSE);
         inputFrame.pack();
         inputFrame.setVisible(true);
-        inputFrame.setLocation(500,250);
+        inputFrame.setLocation(500, 250);
 
         ok.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                 CarParkingSystem.getSystem().enterCode(textField.getText());
-                 inputFrame.dispose();
+                CarParkingSystem.getSystem().enterCode(textField.getText());
+                inputFrame.dispose();
             }
         });
     }

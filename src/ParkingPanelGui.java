@@ -23,12 +23,14 @@ public class ParkingPanelGui implements ActionListener {
         parkedCarJFrame.setPreferredSize(new Dimension(300, 150));
         parkedCarJFrame.pack();
         parkedCarJFrame.setVisible(true);
-        parkedCarJFrame.setLocation(300,100);
+        parkedCarJFrame.setLocation(300, 100);
 
         C.addActionListener(this);
         E.addActionListener(this);
         S.addActionListener(this);
         AF.addActionListener(this);
+        R.addActionListener(this);
+        P.addActionListener(this);
     }
 
     @Override
@@ -48,6 +50,8 @@ public class ParkingPanelGui implements ActionListener {
             case "Open/Close Gate":
                 CarParkingSystem.getSystem().changeGatePosition();
                 break;
+            case "Reset":
+                CarParkingSystem.getSystem().reset();
             default:
                 break;
         }

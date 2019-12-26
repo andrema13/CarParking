@@ -1,51 +1,64 @@
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
-class CarParkingSystem extends Thread {
+class CarParkingSystem {
 
     private static CarParkingSystem carParkingSystem;
     private SemaphoreGui semaphoreGui = new SemaphoreGui();
     private GateGui gateGui = new GateGui();
-    private ParkingSpacesGui parkingSpacesGui = new ParkingSpacesGui();
-    private Semaphore parkingSemaphore = new Semaphore(6);
+    private ParkingSpacesGui parkingSpacesGui;
+    private Semaphore parkingSemaphore;
     private int carNumber = 0;
+    private ArrayList<Thread> runningThreads = new ArrayList<>();
+    private int permits;
+    private String password;
+
+    public CarParkingSystem(int permits, String password) {
+        this.permits = permits;
+        this.password = password;
+        parkingSemaphore = new Semaphore(permits);
+        parkingSpacesGui = new ParkingSpacesGui(permits);
+    }
 
     //Singleton
     public static CarParkingSystem getSystem() {
         return carParkingSystem;
     }
 
-    public static void startSystem() {
-        carParkingSystem = new CarParkingSystem();
+    public static void startSystem(int permits, String password) {
+        carParkingSystem = new CarParkingSystem(permits, password);
     }
 
     public void enterCode(String code) {
-        new Thread() {
+
+        Thread thread = new Thread() {
             public void run() {
-
-                String codeNumber = "0000";
-
                 try {
                     Integer.parseInt(code);
                 } catch (NumberFormatException e) {
                     Log.print("Invalid code: not an integer");
                     return;
                 }
-                if (code.equals(codeNumber)) {
+                if (code.equals(password)) {
                     Log.print("Correct Code!");
                     carEntry();
                 } else {
                     Log.print("Wrong code");
                 }
             }
-        }.start();
+        };
+        thread.start();
+        runningThreads.add(thread);
     }
 
     public void carEntry() {
-        new Thread() {
+        Thread thread = new Thread() {
             public void run() {
                 try {
                     parkingSemaphore.acquire();
+                    if (this.isInterrupted()) return;
+
                     if (parkingSemaphore.availablePermits() == 0) {
                         semaphoreGui.changeSemaphoreColor(SemaphoreGui.SemaphoreColor.RED);
                         Log.print("Park is now FULL!!");
@@ -68,12 +81,14 @@ class CarParkingSystem extends Thread {
                     System.out.println(e.getLocalizedMessage());
                 }
             }
-        }.start();
+        };
+        thread.start();
+        runningThreads.add(thread);
     }
 
     public void carExit() {
 
-        new Thread() {
+        Thread thread = new Thread() {
             public void run() {
                 gateGui.openGate();
 
@@ -90,7 +105,9 @@ class CarParkingSystem extends Thread {
                 semaphoreGui.changeSemaphoreColor(SemaphoreGui.SemaphoreColor.GREEN);
                 parkingSemaphore.release();
             }
-        }.start();
+        };
+        thread.start();
+        runningThreads.add(thread);
     }
 
     public void changeGatePosition() {
@@ -98,55 +115,29 @@ class CarParkingSystem extends Thread {
     }
 
     public void reset() {
-
+        new Thread() {
+            public void run() {
+                Log.print("Resetting System...");
+                parkingSemaphore.release(permits - parkingSemaphore.availablePermits());
+                //kill all threads
+                for (Thread thread : runningThreads) {
+                    thread.stop();//TODO
+                }
+                //clear array
+                runningThreads.clear();
+                for (int i = 0; i < parkingSpacesGui.getTextPanes().length; i++) {
+                    parkingSpacesGui.getTextPanes()[i].setBackground(Color.GREEN);
+                    parkingSpacesGui.getTextPanes()[i].setText(String.valueOf(i + 1));
+                    parkingSpacesGui.getTextPanes()[i].setForeground(Color.WHITE);
+                }
+                semaphoreGui.changeSemaphoreColor(SemaphoreGui.SemaphoreColor.GREEN);
+                gateGui.closeGate();
+                Log.print("Reset Complete!");
+            }
+        }.start();
     }
 
     public void shutDown() {
 
     }
 }
-
-
-   /* private static final Semaphore SEMAPHORE = new Semaphore(5);
-    public static class Car implements Runnable {
-
-        private int carNumber;
-        private ParkingSemaphore parkingSemaphore;
-        private Gate gate;
-
-        public Car(int carNumber) {
-            this.carNumber = carNumber;
-        }
-
-        @Override
-        public void run() {
-
-            try {
-                SEMAPHORE.acquire();
-                int parkingNumber = -1;
-
-                synchronized (PARKING_PLACES) {
-                    for (int i = 0; i < 5; i++) {
-                        if (!PARKING_PLACES[i]) {
-                            PARKING_PLACES[i] = true;
-                            parkingNumber = i;
-                            System.out.printf("Car #%d Parked on %d place.\n", carNumber, i);
-                            break;
-                        }
-                    }
-                }
-                Thread.sleep(5000);
-
-                synchronized (PARKING_PLACES) {
-                    //Free space for car
-                    PARKING_PLACES[parkingNumber] = false;
-                }
-
-                SEMAPHORE.release();
-                System.out.printf("Car #%d leave the parking.\n", carNumber);
-
-            } catch (InterruptedException e) {
-                System.out.println(e.getLocalizedMessage());
-            }
-        }
-    }*/

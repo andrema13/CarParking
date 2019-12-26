@@ -1,4 +1,7 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -11,8 +14,18 @@ public class Log {
         log.add(output);
     }
 
-    public static void save() {
-        //save to file
-        File file = new File((new Date()).toString());
+    public static void saveToFile() {
+        //o windows nao deixava
+        File file = new File(new Date().toString().replaceAll(":", "-") + ".txt");
+        try (PrintWriter writer = new PrintWriter(file)) {
+            StringBuilder sb = new StringBuilder();
+            for (String s : log) {
+                sb.append(s).append("\n");
+            }
+            writer.write(sb.toString());
+        } catch (FileNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
+
     }
 }

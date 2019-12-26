@@ -44,7 +44,7 @@ public class GateGui {
             Log.print("Gate is CLOSED");
             SEMAPHORE.release();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.print("yey");
         }
     }
 
