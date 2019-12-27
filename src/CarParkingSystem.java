@@ -13,6 +13,8 @@ class CarParkingSystem {
     private ArrayList<Thread> runningThreads = new ArrayList<>();
     private int permits;
     private String password;
+    //To make sure all threads access the same value( stay in RAM)
+    private volatile boolean canEnter = false;
 
     public CarParkingSystem(int permits, String password) {
         this.permits = permits;
@@ -42,7 +44,19 @@ class CarParkingSystem {
                 }
                 if (code.equals(password)) {
                     Log.print("Correct Code!");
-                    carEntry();
+
+                    try {
+                        parkingSemaphore.acquire();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (parkingSemaphore.availablePermits() == 0) {
+                        semaphoreGui.changeSemaphoreColor(SemaphoreGui.SemaphoreColor.RED);
+                        Log.print("Park is now FULL!!");
+                    }
+                    gateGui.openGate();
+                    canEnter = true;
                 } else {
                     Log.print("Wrong code");
                 }
@@ -56,14 +70,11 @@ class CarParkingSystem {
         Thread thread = new Thread() {
             public void run() {
                 try {
-                    parkingSemaphore.acquire();
-                    if (this.isInterrupted()) return;
-
-                    if (parkingSemaphore.availablePermits() == 0) {
-                        semaphoreGui.changeSemaphoreColor(SemaphoreGui.SemaphoreColor.RED);
-                        Log.print("Park is now FULL!!");
+                    if(!canEnter){
+                        Log.print("Can't enter yet!");
+                        return;
                     }
-                    gateGui.openGate();
+                    canEnter = false;
                     carNumber++;
                     Log.print("Car nº " + carNumber + " is parking");
                     Thread.sleep(2000);
@@ -90,6 +101,11 @@ class CarParkingSystem {
 
         Thread thread = new Thread() {
             public void run() {
+
+                if(parkingSemaphore.availablePermits() == permits){
+                    Log.print("Parking is empty!");
+                    return;
+                }
                 gateGui.openGate();
 
                 for (int i = parkingSpacesGui.getTextPanes().length - 1; i >= 0; i--) {
@@ -121,7 +137,11 @@ class CarParkingSystem {
                 parkingSemaphore.release(permits - parkingSemaphore.availablePermits());
                 //kill all threads
                 for (Thread thread : runningThreads) {
-                    thread.stop();//TODO
+                    try {
+                        thread.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
                 //clear array
                 runningThreads.clear();

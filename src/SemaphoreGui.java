@@ -1,7 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class SemaphoreGui extends Thread {
+public class SemaphoreGui {
 
     enum SemaphoreColor {GREEN, RED;}
 

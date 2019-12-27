@@ -37,6 +37,9 @@ public class GateGui {
 
     public void closeGate() {
         try {
+            if(gateState.equals(GateState.CLOSED)){
+                return;
+            }
             Log.print("Gate is closing...");
             Thread.sleep(1500);
             gateState = GateState.CLOSED;
@@ -50,6 +53,9 @@ public class GateGui {
 
     public void openGate() {
         try {
+            if(gateState.equals(GateState.OPEN)){
+                return;
+            }
             SEMAPHORE.acquire();
             Log.print("Gate is opening...");
             Thread.sleep(1500);
